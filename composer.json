@@ -48,11 +48,12 @@
         "phpcompatibility/php-compatibility": "*",
         "slevomat/coding-standard": "^8.13"
     },
-    "prefer-stable" : true,
+    "prefer-stable": true,
     "config": {
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true,
             "teewurst/psr4-advanced-wildcard-composer-plugin": true
-        }
+        },
+        "cache-dir": "/tmp/.composer/cache"
     }
 }

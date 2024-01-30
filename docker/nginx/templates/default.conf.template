@@ -1,0 +1,31 @@
+# https://marcofranssen.nl/nginx-1-19-supports-environment-variables-and-templates-in-docker
+
+server {
+	listen 80;
+
+	server_name ${NGINX_SERVERNAME};
+
+	access_log off;
+	error_log /dev/null crit;
+
+	root ${NGINX_ROOT}/public;
+	index index.php index.html index.htm;
+
+	location / {
+		try_files $uri /index.php?$args;
+	}
+
+	location ~ \.php$ {
+		fastcgi_split_path_info ^(.+\.php)(/.+)$;
+		fastcgi_pass ${NGINX_PHPSERVER}:9000;
+		fastcgi_param PATH_INFO $fastcgi_path_info;
+		fastcgi_index index.php;
+
+		fastcgi_buffers 16 16k; 
+		fastcgi_buffer_size 32k;
+
+		include fastcgi_params;
+		fastcgi_param SCRIPT_FILENAME ${NGINX_ROOT}/application/entry.php;
+		fastcgi_keep_conn on;
+	}
+}

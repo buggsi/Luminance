@@ -1,0 +1,98 @@
+version: "3.5"
+
+services:
+  service_mysql:
+    build:
+      context: ./mysql
+      args:
+        - user=$user
+        - group=$group
+        - uid=$uid
+        - gid=$gid
+    image: $PROJECT_NAME:mariadb
+    container_name: $PROJECT_NAME-mysql
+    environment:
+      - TZ=$TIMEZONE
+      - MYSQL_DATABASE=$MYSQL_DATABASE
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_USER=$MYSQL_USER
+      - MYSQL_PASSWORD=$MYSQL_PASSWORD
+      # - MYSQL_ROOT_HOST=$MYSQL_ROOT_HOST
+    ports:
+      - $MYSQL_EXTERNAL_PORT:3306
+    volumes:
+      - ../database:/var/lib/mysql
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "1"
+    restart: unless-stopped
+
+  service_php:
+    build:
+      context: ./php
+      args:
+        - user=$user
+        - group=$group
+        - uid=$uid
+        - gid=$gid
+    image: $PROJECT_NAME:php
+    container_name: $PROJECT_NAME-php
+    environment:
+      - TZ=$TIMEZONE
+    volumes:
+      - ../:$NGINX_ROOT
+      # Scan this dir for additional .ini files /usr/local/etc/php/conf.d
+      - ./php/php.d/mysettings.ini:/usr/local/etc/php/conf.d/mysettings.ini
+      # Excluded dirs
+      - $NGINX_ROOT/database
+      - $NGINX_ROOT/docker
+    restart: unless-stopped
+
+  service_nginx:
+    build:
+      context: ./nginx
+      args:
+        - user=$user
+        - group=$group
+        - uid=$uid
+        - gid=$gid
+    image: $PROJECT_NAME:nginx
+    container_name: $PROJECT_NAME-nginx
+    ports:
+      - 80:80
+      - 443:443
+    environment:
+      - TZ=$TIMEZONE
+      - NGINX_PHPSERVER=$PROJECT_NAME-php
+      - NGINX_SERVERNAME=$NGINX_SERVERNAME
+      - NGINX_ROOT=$NGINX_ROOT
+    volumes:
+      - ../:$NGINX_ROOT
+      # - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/templates:/etc/nginx/templates:ro
+      # Config to run as user nginx
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      # Excluded dirs
+      - $NGINX_ROOT/database
+      - $NGINX_ROOT/docker
+    depends_on:
+      - service_php
+      - service_mysql
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1G"
+        max-file: "1"
+    restart: unless-stopped
+
+  wait:
+    # Controlling Service Readiness in Docker Compose https://dev.to/renanbr/controlling-service-readiness-in-docker-compose-4dfm
+    # usage: docker compose run wait -c mysql:3306
+    image: dokku/wait
+    container_name: wait
+
+networks:
+  default:
+    name: $PROJECT_NAME

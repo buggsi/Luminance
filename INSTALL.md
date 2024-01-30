@@ -16,7 +16,7 @@ PHP Modules
 * php-date
 * php-igbinary
 * php-mbstring
-* php-memcache
+* php-memcached
 * php-mysqlnd
 * php-xml
 * php-zip

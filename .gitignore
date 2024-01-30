@@ -8,6 +8,8 @@ nbproject/
 *.bk
 *.phar
 info.php
-vendor
+vendor/
 .idea/
 composer.lock
+.env
+database/
