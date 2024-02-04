@@ -15,6 +15,7 @@ help() {
     echo "Usage: $0 <command> <argument>"
     echo
     echo "Commands: "
+    echo " help              - this help screen"
     echo " install_docker    - install Docker and Docker Compose"
     echo " install_luminance - install and configure Luminance"
     echo " build             - build the docker images"
@@ -161,6 +162,9 @@ if [ "$#" -lt 1 ]; then
 fi
 
 case $1 in
+help)
+    help
+    ;;
 install_docker)
     install_docker
     ;;
