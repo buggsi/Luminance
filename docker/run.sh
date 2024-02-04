@@ -38,7 +38,7 @@ install_docker() {
         curl -fsSL https://get.docker.com | sh
 
         # Permission for current user to run docker as non-root
-        if [[ $EUID > 0 ]]; then
+        if [ $EUID -ne 0 ]; then
             sudo groupadd docker
             sudo usermod -aG docker $USER
             echo "Log out and log back in so that your group membership is re-evaluated"
@@ -69,8 +69,16 @@ install_luminance() {
     # Copy settings from template
     cp -np ../application/settings.ini.template ../application/settings.ini
 
-    docker compose run -u www-data service_php php application/entry.php setup configure
-    docker compose run -u www-data service_php php application/entry.php setup install
+    if [ $EUID -ne 0 ]; then
+        user=www-data
+    else
+        user=root
+    fi
+    # Run the setup install first, so the database is created before doing the configuration
+    start
+    docker compose exec -u $user service_php php application/entry.php setup install
+    docker compose exec -u $user service_php php application/entry.php setup configure
+    stop
 }
 
 build() {
@@ -89,10 +97,14 @@ build() {
 
     # Build the docker containers while pulling the latest images
     docker compose build --pull --no-cache
-    # Install the PHP dependencies with Composer
-    docker compose run -u www-data service_php composer install
 
-    clean_docker
+    # Install the PHP dependencies with Composer
+    if [ $EUID -ne 0 ]; then
+        user=www-data
+    else
+        user=root
+    fi
+    docker compose run --rm -u $user service_php composer install
 }
 
 start() {
@@ -151,6 +163,9 @@ fi
 case $1 in
 install_docker)
     install_docker
+    ;;
+install_luminance)
+    install_luminance
     ;;
 build)
     build
