@@ -8,4 +8,4 @@ ARG ugroup=mysql
 ARG uid=$uid
 ARG gid=$gid
 RUN echo $uid $uname $gid $ugroup && \
-    usermod --uid $uid $uname && groupmod --gid $gid $ugroup
+    if [ $uid -ne 0 ]; then usermod --uid $uid $uname && groupmod --gid $gid $ugroup; fi
